@@ -12,7 +12,7 @@ api_port = int(os.environ.get("PORT", 8080))
 
 
 # Streamlit UI elements
-st.title("Dropbox Search Tool")
+st.title("Youtube Playlist ai chat")
 
 yt_url = st.text_input("Enter youtube playlist link")
 
@@ -21,10 +21,12 @@ question = st.text_input(
     placeholder="What data are looking for?"
 )
 
-
-if question:
+if yt_url:
     video_urls=yt.fetch_video_urls(yt_url)
     gt.get_transcript(video_urls)
+
+if question:
+
     url = f'http://{api_host}:{api_port}/'
     data = {"query": question}
 
