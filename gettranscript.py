@@ -1,7 +1,7 @@
 from urllib.parse import urlparse, parse_qs
 from contextlib import suppress
 from youtube_transcript_api import YouTubeTranscriptApi
-import jsonlines
+from docx import Document
 
 def get_yt_id(url, ignore_playlist=False):
     # Examples:
@@ -23,20 +23,25 @@ def get_yt_id(url, ignore_playlist=False):
    # returns None for invalid YouTube url
         
 def get_transcript(urls):
-    # Create a JSON Lines file
-    with jsonlines.open('transcript.jsonl', mode='w') as writer:
-        for i in urls:
-            try:
-                ida = get_yt_id(i)
-                ts = YouTubeTranscriptApi.get_transcript(ida)
-                output=''
-                for x in ts:
-                    sentence = x['text']
-                    output += f' {sentence}\n'
-                writer.write({'transcript': output})
-                print(f"Transcript for URL: {i} retrieved successfully")
-                print(f"Transcript: {output}")
-            except Exception as e:
-                print(f"Error retrieving transcript for URL: {i}")
-                print(f"Error message: {str(e)}")
-    return "transcript.jsonl"
+    # Create a Word document
+    doc = Document()
+
+    for i in urls:
+        try:
+            ida = get_yt_id(i)
+            ts = YouTubeTranscriptApi.get_transcript(ida)
+            output = ''
+            for x in ts:
+                sentence = x['text']
+                output += f' {sentence}'
+            doc.add_paragraph(output)
+            print(f"Transcript for URL: {i} retrieved successfully")
+            print(f"Transcript: {output}")
+        except Exception as e:
+            print(f"Error retrieving transcript for URL: {i}")
+            print(f"Error message: {str(e)}")
+
+    # Save the Word document to a specific location
+    doc.save('./docs/transcript.docx')
+    return "transcript.docx"
+get_transcript(["https://www.youtube.com/watch?v=g_zhTbDCvFI&ab_channel=EnglishFairyTales"])
