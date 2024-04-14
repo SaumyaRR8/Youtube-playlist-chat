@@ -3,11 +3,33 @@ import os
 from dotenv import load_dotenv
 from common.embedder import embeddings, index_embeddings
 from common.prompt import prompt
+from pathway.stdlib.ml.index import KNNIndex
 from pathway.xpacks.llm.parsers import ParseUnstructured
 from pathway.xpacks.llm.splitters import TokenCountSplitter
+from pathway.xpacks.llm.embedders import OpenAIEmbedder
+from pathway.xpacks.llm.llms import OpenAIChat, prompt_chat_single_qa
 load_dotenv()
 
-dropbox_folder_path = os.environ.get("DROPBOX_LOCAL_FOLDER_PATH", "/usr/local/documents")
+embedder = OpenAIEmbedder(
+    api_key=os.getenv("OPENAI_API_TOKEN"),
+    model=os.getenv("EMBEDDER_LOCATOR"),
+    retry_strategy=pw.asynchronous.FixedDelayRetryStrategy(),
+    cache_strategy=pw.asynchronous.DefaultCache(),
+)
+
+model = OpenAIChat(
+        api_key=os.getenv("OPENAI_API_TOKEN"),
+        model=os.getenv("EMBEDDER_LOCATOR"),
+        temperature=os.getenv("TEMPERATURE"),
+        max_tokens=os.getenv("MAX_TOKENS"),
+        retry_strategy=pw.asynchronous.FixedDelayRetryStrategy(),
+        cache_strategy=pw.asynchronous.DefaultCache(),
+    )
+
+
+class QueryInputSchema(pw.Schema):
+    query: str
+
 
 
 def run(host, port):
@@ -18,14 +40,16 @@ def run(host, port):
         schema=QueryInputSchema,
         autocommit_duration_ms=50,
     )
-
+    
     # Real-time data coming from external unstructured data sources like a PDF file
+
     input_data = pw.io.fs.read(
-        dropbox_folder_path,
+        "./docs/",
         mode="streaming",
         format="binary",
         autocommit_duration_ms=50,
     )
+    
     
     # Chunk input data into smaller documents
     parser = ParseUnstructured()
@@ -57,5 +81,3 @@ def run(host, port):
     pw.run()
 
 
-class QueryInputSchema(pw.Schema):
-    query: str
